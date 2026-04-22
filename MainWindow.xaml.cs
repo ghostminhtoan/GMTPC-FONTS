@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
@@ -36,6 +37,7 @@ namespace GMTPC_FONTS
         {
             try
             {
+                OpenFontListInNotepad();
                 await Task.Run(() => InstallFonts(cancellation.Token));
                 SetProgress(100, "Completed");
                 SetControlsEnabled(false);
@@ -55,6 +57,28 @@ namespace GMTPC_FONTS
                 SetControlsEnabled(false);
                 await Task.Delay(2500);
                 Application.Current.Shutdown(1);
+            }
+        }
+
+        private static void OpenFontListInNotepad()
+        {
+            string fontListPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fonts-list.txt");
+            if (!File.Exists(fontListPath))
+            {
+                return;
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "notepad.exe",
+                    Arguments = "\"" + fontListPath + "\"",
+                    UseShellExecute = false
+                });
+            }
+            catch
+            {
             }
         }
 
