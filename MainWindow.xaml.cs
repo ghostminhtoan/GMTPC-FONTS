@@ -14,6 +14,7 @@ namespace GMTPC_FONTS
     public partial class MainWindow : Window
     {
         private const int WmFontChange = 0x001D;
+        private const int MaxParallelFontInstalls = 10;
         private static readonly IntPtr HwndBroadcast = new IntPtr(0xffff);
         private static readonly string[] FontExtensions = { ".ttf", ".otf", ".ttc", ".fon", ".pfm", ".pfb" };
         private readonly CancellationTokenSource cancellation = new CancellationTokenSource();
@@ -62,6 +63,7 @@ namespace GMTPC_FONTS
             }
 
             string extractRoot = Path.Combine(Path.GetTempPath(), "GMTPC-FONTS-" + Guid.NewGuid().ToString("N"));
+            bool completed = false;
 
             try
             {
@@ -83,24 +85,18 @@ namespace GMTPC_FONTS
                     "Fonts");
                 Directory.CreateDirectory(userFontsDirectory);
 
-                for (int i = 0; i < fontFiles.Count; i++)
-                {
-                    CheckPauseOrStop(token);
-                    SetProgress(10 + (int)Math.Round((i * 85.0) / fontFiles.Count), "Installing " + Path.GetFileName(fontFiles[i]));
-                    InstallFont(fontFiles[i], userFontsDirectory);
-                    int progress = 10 + (int)Math.Round(((i + 1) * 85.0) / fontFiles.Count);
-                    SetProgress(progress, "Installed " + Path.GetFileName(fontFiles[i]));
-                }
+                InstallFontsInParallel(fontFiles, userFontsDirectory, token);
 
                 CheckPauseOrStop(token);
                 SetProgress(97, "Refreshing Windows font list");
                 BroadcastFontChange();
                 SetProgress(98, "Cleaning up");
+                completed = true;
             }
             finally
             {
                 TryDeleteDirectory(extractRoot);
-                if (!token.IsCancellationRequested)
+                if (completed && !token.IsCancellationRequested)
                 {
                     TryDeleteFile(archivePath);
                 }
@@ -166,6 +162,47 @@ namespace GMTPC_FONTS
 
             result.Sort(StringComparer.OrdinalIgnoreCase);
             return result;
+        }
+
+        private void InstallFontsInParallel(List<string> fontFiles, string userFontsDirectory, CancellationToken token)
+        {
+            int completedCount = 0;
+            ParallelOptions options = new ParallelOptions
+            {
+                CancellationToken = token,
+                MaxDegreeOfParallelism = MaxParallelFontInstalls
+            };
+
+            try
+            {
+                Parallel.ForEach(fontFiles, options, fontFile =>
+                {
+                    CheckPauseOrStop(token);
+                    string fontName = Path.GetFileName(fontFile);
+                    int currentCompleted = Volatile.Read(ref completedCount);
+                    int startProgress = 10 + (int)Math.Round((currentCompleted * 85.0) / fontFiles.Count);
+                    SetProgress(startProgress, "Installing " + fontName + " (" + currentCompleted + "/" + fontFiles.Count + ")");
+
+                    InstallFont(fontFile, userFontsDirectory);
+
+                    int done = Interlocked.Increment(ref completedCount);
+                    int progress = 10 + (int)Math.Round((done * 85.0) / fontFiles.Count);
+                    SetProgress(progress, "Installed " + fontName + " (" + done + "/" + fontFiles.Count + ")");
+                    CheckPauseOrStop(token);
+                });
+            }
+            catch (AggregateException ex)
+            {
+                foreach (Exception innerException in ex.Flatten().InnerExceptions)
+                {
+                    if (innerException is OperationCanceledException)
+                    {
+                        throw innerException;
+                    }
+                }
+
+                throw ex.Flatten().InnerExceptions[0];
+            }
         }
 
         private static void InstallFont(string sourcePath, string userFontsDirectory)
