@@ -4,9 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GMTPC_FONTS"
+        xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework"
         mc:Ignorable="d"
         Title="GMTPC Fonts"
-        Width="720"
+        Width="920"
         Height="390"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
@@ -50,49 +51,10 @@
                        TextTrimming="CharacterEllipsis"
                        MaxWidth="580" />
 
-            <Grid Grid.Row="6">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Grid.Column="0">
-                    <Border Height="24" Margin="0,0,0,6" Padding="8,0" Background="#151A20" BorderBrush="#2C3540" BorderThickness="1">
-                        <TextBlock x:Name="WorkerStatus01" Text="01 Ready" VerticalAlignment="Center" FontSize="11" Foreground="#AAB4C0" TextTrimming="CharacterEllipsis" />
-                    </Border>
-                    <Border Height="24" Margin="0,0,0,6" Padding="8,0" Background="#151A20" BorderBrush="#2C3540" BorderThickness="1">
-                        <TextBlock x:Name="WorkerStatus02" Text="02 Ready" VerticalAlignment="Center" FontSize="11" Foreground="#AAB4C0" TextTrimming="CharacterEllipsis" />
-                    </Border>
-                    <Border Height="24" Margin="0,0,0,6" Padding="8,0" Background="#151A20" BorderBrush="#2C3540" BorderThickness="1">
-                        <TextBlock x:Name="WorkerStatus03" Text="03 Ready" VerticalAlignment="Center" FontSize="11" Foreground="#AAB4C0" TextTrimming="CharacterEllipsis" />
-                    </Border>
-                    <Border Height="24" Margin="0,0,0,6" Padding="8,0" Background="#151A20" BorderBrush="#2C3540" BorderThickness="1">
-                        <TextBlock x:Name="WorkerStatus04" Text="04 Ready" VerticalAlignment="Center" FontSize="11" Foreground="#AAB4C0" TextTrimming="CharacterEllipsis" />
-                    </Border>
-                    <Border Height="24" Padding="8,0" Background="#151A20" BorderBrush="#2C3540" BorderThickness="1">
-                        <TextBlock x:Name="WorkerStatus05" Text="05 Ready" VerticalAlignment="Center" FontSize="11" Foreground="#AAB4C0" TextTrimming="CharacterEllipsis" />
-                    </Border>
-                </StackPanel>
-
-                <StackPanel Grid.Column="2">
-                    <Border Height="24" Margin="0,0,0,6" Padding="8,0" Background="#151A20" BorderBrush="#2C3540" BorderThickness="1">
-                        <TextBlock x:Name="WorkerStatus06" Text="06 Ready" VerticalAlignment="Center" FontSize="11" Foreground="#AAB4C0" TextTrimming="CharacterEllipsis" />
-                    </Border>
-                    <Border Height="24" Margin="0,0,0,6" Padding="8,0" Background="#151A20" BorderBrush="#2C3540" BorderThickness="1">
-                        <TextBlock x:Name="WorkerStatus07" Text="07 Ready" VerticalAlignment="Center" FontSize="11" Foreground="#AAB4C0" TextTrimming="CharacterEllipsis" />
-                    </Border>
-                    <Border Height="24" Margin="0,0,0,6" Padding="8,0" Background="#151A20" BorderBrush="#2C3540" BorderThickness="1">
-                        <TextBlock x:Name="WorkerStatus08" Text="08 Ready" VerticalAlignment="Center" FontSize="11" Foreground="#AAB4C0" TextTrimming="CharacterEllipsis" />
-                    </Border>
-                    <Border Height="24" Margin="0,0,0,6" Padding="8,0" Background="#151A20" BorderBrush="#2C3540" BorderThickness="1">
-                        <TextBlock x:Name="WorkerStatus09" Text="09 Ready" VerticalAlignment="Center" FontSize="11" Foreground="#AAB4C0" TextTrimming="CharacterEllipsis" />
-                    </Border>
-                    <Border Height="24" Padding="8,0" Background="#151A20" BorderBrush="#2C3540" BorderThickness="1">
-                        <TextBlock x:Name="WorkerStatus10" Text="10 Ready" VerticalAlignment="Center" FontSize="11" Foreground="#AAB4C0" TextTrimming="CharacterEllipsis" />
-                    </Border>
-                </StackPanel>
-            </Grid>
+            <primitives:UniformGrid x:Name="WorkerGrid"
+                                    Grid.Row="6"
+                                    Columns="4"
+                                    Rows="5" />
 
             <StackPanel Grid.Row="8"
                         Orientation="Horizontal"

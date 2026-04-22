@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Microsoft.Win32;
 
 namespace GMTPC_FONTS
@@ -15,32 +16,20 @@ namespace GMTPC_FONTS
     public partial class MainWindow : Window
     {
         private const int WmFontChange = 0x001D;
-        private const int MaxParallelFontInstalls = 10;
+        private const int MaxParallelFontInstalls = 20;
         private static readonly IntPtr HwndBroadcast = new IntPtr(0xffff);
         private static readonly string[] FontExtensions = { ".ttf", ".otf", ".ttc", ".fon", ".pfm", ".pfb" };
         private readonly CancellationTokenSource cancellation = new CancellationTokenSource();
         private readonly ManualResetEventSlim pauseGate = new ManualResetEventSlim(true);
         private readonly object statusLock = new object();
-        private readonly TextBlock[] workerStatusBlocks;
+        private readonly TextBlock[] workerStatusBlocks = new TextBlock[MaxParallelFontInstalls];
         private bool isPaused;
         private string currentStatus = "Preparing";
 
         public MainWindow()
         {
             InitializeComponent();
-            workerStatusBlocks = new[]
-            {
-                WorkerStatus01,
-                WorkerStatus02,
-                WorkerStatus03,
-                WorkerStatus04,
-                WorkerStatus05,
-                WorkerStatus06,
-                WorkerStatus07,
-                WorkerStatus08,
-                WorkerStatus09,
-                WorkerStatus10
-            };
+            InitializeWorkerStatuses();
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
@@ -248,6 +237,39 @@ namespace GMTPC_FONTS
             {
                 workerStatusBlocks[workerIndex].Text = (workerIndex + 1).ToString("00") + " " + text;
             }));
+        }
+
+        private void InitializeWorkerStatuses()
+        {
+            SolidColorBrush background = new SolidColorBrush(Color.FromRgb(21, 26, 32));
+            SolidColorBrush borderBrush = new SolidColorBrush(Color.FromRgb(44, 53, 64));
+            SolidColorBrush foreground = new SolidColorBrush(Color.FromRgb(170, 180, 192));
+
+            for (int i = 0; i < workerStatusBlocks.Length; i++)
+            {
+                TextBlock status = new TextBlock
+                {
+                    Text = (i + 1).ToString("00") + " Ready",
+                    VerticalAlignment = VerticalAlignment.Center,
+                    FontSize = 11,
+                    Foreground = foreground,
+                    TextTrimming = TextTrimming.CharacterEllipsis
+                };
+
+                Border border = new Border
+                {
+                    Height = 24,
+                    Margin = new Thickness(0, 0, 8, 6),
+                    Padding = new Thickness(8, 0, 8, 0),
+                    Background = background,
+                    BorderBrush = borderBrush,
+                    BorderThickness = new Thickness(1),
+                    Child = status
+                };
+
+                workerStatusBlocks[i] = status;
+                WorkerGrid.Children.Add(border);
+            }
         }
 
         private static void InstallFont(string sourcePath, string userFontsDirectory)
