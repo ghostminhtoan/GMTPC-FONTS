@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using Microsoft.Win32;
 
 namespace GMTPC_FONTS
@@ -20,12 +21,26 @@ namespace GMTPC_FONTS
         private readonly CancellationTokenSource cancellation = new CancellationTokenSource();
         private readonly ManualResetEventSlim pauseGate = new ManualResetEventSlim(true);
         private readonly object statusLock = new object();
+        private readonly TextBlock[] workerStatusBlocks;
         private bool isPaused;
         private string currentStatus = "Preparing";
 
         public MainWindow()
         {
             InitializeComponent();
+            workerStatusBlocks = new[]
+            {
+                WorkerStatus01,
+                WorkerStatus02,
+                WorkerStatus03,
+                WorkerStatus04,
+                WorkerStatus05,
+                WorkerStatus06,
+                WorkerStatus07,
+                WorkerStatus08,
+                WorkerStatus09,
+                WorkerStatus10
+            };
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
@@ -167,29 +182,46 @@ namespace GMTPC_FONTS
         private void InstallFontsInParallel(List<string> fontFiles, string userFontsDirectory, CancellationToken token)
         {
             int completedCount = 0;
-            ParallelOptions options = new ParallelOptions
-            {
-                CancellationToken = token,
-                MaxDegreeOfParallelism = MaxParallelFontInstalls
-            };
+            int nextIndex = -1;
+            int workerCount = Math.Min(MaxParallelFontInstalls, fontFiles.Count);
+            Task[] workers = new Task[workerCount];
 
             try
             {
-                Parallel.ForEach(fontFiles, options, fontFile =>
+                for (int i = 0; i < workers.Length; i++)
                 {
-                    CheckPauseOrStop(token);
-                    string fontName = Path.GetFileName(fontFile);
-                    int currentCompleted = Volatile.Read(ref completedCount);
-                    int startProgress = 10 + (int)Math.Round((currentCompleted * 85.0) / fontFiles.Count);
-                    SetProgress(startProgress, "Installing " + fontName + " (" + currentCompleted + "/" + fontFiles.Count + ")");
+                    int workerIndex = i;
+                    workers[i] = Task.Factory.StartNew(() =>
+                    {
+                        SetWorkerStatus(workerIndex, "Ready");
+                        while (true)
+                        {
+                            CheckPauseOrStop(token);
+                            int fontIndex = Interlocked.Increment(ref nextIndex);
+                            if (fontIndex >= fontFiles.Count)
+                            {
+                                SetWorkerStatus(workerIndex, "Idle");
+                                return;
+                            }
 
-                    InstallFont(fontFile, userFontsDirectory);
+                            string fontFile = fontFiles[fontIndex];
+                            string fontName = Path.GetFileName(fontFile);
+                            int currentCompleted = Volatile.Read(ref completedCount);
+                            int startProgress = 10 + (int)Math.Round((currentCompleted * 85.0) / fontFiles.Count);
+                            SetWorkerStatus(workerIndex, "Installing " + fontName);
+                            SetProgress(startProgress, "Installing " + fontName + " (" + currentCompleted + "/" + fontFiles.Count + ")");
 
-                    int done = Interlocked.Increment(ref completedCount);
-                    int progress = 10 + (int)Math.Round((done * 85.0) / fontFiles.Count);
-                    SetProgress(progress, "Installed " + fontName + " (" + done + "/" + fontFiles.Count + ")");
-                    CheckPauseOrStop(token);
-                });
+                            InstallFont(fontFile, userFontsDirectory);
+
+                            int done = Interlocked.Increment(ref completedCount);
+                            int progress = 10 + (int)Math.Round((done * 85.0) / fontFiles.Count);
+                            SetWorkerStatus(workerIndex, "Done " + fontName);
+                            SetProgress(progress, "Installed " + fontName + " (" + done + "/" + fontFiles.Count + ")");
+                        }
+                    }, token);
+                }
+
+                Task.WaitAll(workers);
             }
             catch (AggregateException ex)
             {
@@ -205,12 +237,35 @@ namespace GMTPC_FONTS
             }
         }
 
+        private void SetWorkerStatus(int workerIndex, string text)
+        {
+            if (workerIndex < 0 || workerIndex >= workerStatusBlocks.Length)
+            {
+                return;
+            }
+
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                workerStatusBlocks[workerIndex].Text = (workerIndex + 1).ToString("00") + " " + text;
+            }));
+        }
+
         private static void InstallFont(string sourcePath, string userFontsDirectory)
         {
             string targetPath = Path.Combine(userFontsDirectory, MakeSafeFileName(Path.GetFileName(sourcePath)));
             if (!File.Exists(targetPath))
             {
-                File.Copy(sourcePath, targetPath, false);
+                try
+                {
+                    File.Copy(sourcePath, targetPath, false);
+                }
+                catch (IOException)
+                {
+                    if (!File.Exists(targetPath))
+                    {
+                        throw;
+                    }
+                }
             }
 
             string valueName = Path.GetFileNameWithoutExtension(targetPath) + GetRegistryFontSuffix(targetPath);
