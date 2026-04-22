@@ -1,12 +1,48 @@
-﻿<Window x:Class="GMTPC_FONTS.MainWindow"
+<Window x:Class="GMTPC_FONTS.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GMTPC_FONTS"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+        Title="GMTPC Fonts"
+        Width="420"
+        Height="150"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Background="#111418"
+        Foreground="#F3F6FA"
+        FontFamily="Segoe UI Variable, Segoe UI"
+        ShowInTaskbar="True"
+        Loaded="Window_Loaded">
+    <Border Padding="28" Background="#111418">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="18" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       Text="Installing..."
+                       FontSize="24"
+                       FontWeight="SemiBold"
+                       HorizontalAlignment="Center" />
+
+            <ProgressBar x:Name="InstallProgress"
+                         Grid.Row="2"
+                         Minimum="0"
+                         Maximum="100"
+                         Value="0" />
+
+            <TextBlock x:Name="ProgressText"
+                       Grid.Row="4"
+                       Text="Preparing"
+                       FontSize="12"
+                       Foreground="#AAB4C0"
+                       HorizontalAlignment="Center" />
+        </Grid>
+    </Border>
 </Window>
