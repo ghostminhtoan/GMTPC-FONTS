@@ -6,8 +6,8 @@
         xmlns:local="clr-namespace:GMTPC_FONTS"
         mc:Ignorable="d"
         Title="GMTPC Fonts"
-        Width="420"
-        Height="150"
+        Width="460"
+        Height="210"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         Background="#111418"
@@ -21,7 +21,8 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="18" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="12" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="18" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
@@ -42,7 +43,32 @@
                        Text="Preparing"
                        FontSize="12"
                        Foreground="#AAB4C0"
-                       HorizontalAlignment="Center" />
+                       HorizontalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"
+                       MaxWidth="360" />
+
+            <StackPanel Grid.Row="6"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center">
+                <Button x:Name="PauseButton"
+                        Content="Pause"
+                        Width="84"
+                        Height="30"
+                        Margin="0,0,10,0"
+                        Click="PauseButton_Click"
+                        Background="#252B33"
+                        Foreground="#F3F6FA"
+                        BorderBrush="#3A444F" />
+
+                <Button x:Name="StopButton"
+                        Content="Stop"
+                        Width="84"
+                        Height="30"
+                        Click="StopButton_Click"
+                        Background="#3A2227"
+                        Foreground="#F3F6FA"
+                        BorderBrush="#70414A" />
+            </StackPanel>
         </Grid>
     </Border>
 </Window>

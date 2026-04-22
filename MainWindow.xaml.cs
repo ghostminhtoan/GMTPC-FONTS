@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Win32;
@@ -15,6 +16,11 @@ namespace GMTPC_FONTS
         private const int WmFontChange = 0x001D;
         private static readonly IntPtr HwndBroadcast = new IntPtr(0xffff);
         private static readonly string[] FontExtensions = { ".ttf", ".otf", ".ttc", ".fon", ".pfm", ".pfb" };
+        private readonly CancellationTokenSource cancellation = new CancellationTokenSource();
+        private readonly ManualResetEventSlim pauseGate = new ManualResetEventSlim(true);
+        private readonly object statusLock = new object();
+        private bool isPaused;
+        private string currentStatus = "Preparing";
 
         public MainWindow()
         {
@@ -25,20 +31,29 @@ namespace GMTPC_FONTS
         {
             try
             {
-                await Task.Run(() => InstallFonts());
+                await Task.Run(() => InstallFonts(cancellation.Token));
                 SetProgress(100, "Completed");
+                SetControlsEnabled(false);
                 await Task.Delay(700);
                 Application.Current.Shutdown();
+            }
+            catch (OperationCanceledException)
+            {
+                SetProgress((int)InstallProgress.Value, "Stopped");
+                SetControlsEnabled(false);
+                await Task.Delay(900);
+                Application.Current.Shutdown(2);
             }
             catch (Exception ex)
             {
                 SetProgress(100, ex.Message);
+                SetControlsEnabled(false);
                 await Task.Delay(2500);
                 Application.Current.Shutdown(1);
             }
         }
 
-        private void InstallFonts()
+        private void InstallFonts(CancellationToken token)
         {
             string archivePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GMTPC-FONTS.zip");
             if (!File.Exists(archivePath))
@@ -50,9 +65,11 @@ namespace GMTPC_FONTS
 
             try
             {
-                SetProgress(5, "Extracting");
-                ZipFile.ExtractToDirectory(archivePath, extractRoot, Encoding.UTF8);
+                CheckPauseOrStop(token);
+                ExtractArchive(archivePath, extractRoot, token);
 
+                CheckPauseOrStop(token);
+                SetProgress(10, "Scanning fonts");
                 List<string> fontFiles = FindFontFiles(extractRoot);
                 if (fontFiles.Count == 0)
                 {
@@ -68,19 +85,67 @@ namespace GMTPC_FONTS
 
                 for (int i = 0; i < fontFiles.Count; i++)
                 {
+                    CheckPauseOrStop(token);
+                    SetProgress(10 + (int)Math.Round((i * 85.0) / fontFiles.Count), "Installing " + Path.GetFileName(fontFiles[i]));
                     InstallFont(fontFiles[i], userFontsDirectory);
                     int progress = 10 + (int)Math.Round(((i + 1) * 85.0) / fontFiles.Count);
-                    SetProgress(progress, "Installing");
+                    SetProgress(progress, "Installed " + Path.GetFileName(fontFiles[i]));
                 }
 
+                CheckPauseOrStop(token);
+                SetProgress(97, "Refreshing Windows font list");
                 BroadcastFontChange();
                 SetProgress(98, "Cleaning up");
             }
             finally
             {
                 TryDeleteDirectory(extractRoot);
-                TryDeleteFile(archivePath);
+                if (!token.IsCancellationRequested)
+                {
+                    TryDeleteFile(archivePath);
+                }
             }
+        }
+
+        private void ExtractArchive(string archivePath, string extractRoot, CancellationToken token)
+        {
+            Directory.CreateDirectory(extractRoot);
+
+            using (ZipArchive archive = ZipFile.OpenRead(archivePath))
+            {
+                int total = archive.Entries.Count;
+                for (int i = 0; i < total; i++)
+                {
+                    CheckPauseOrStop(token);
+
+                    ZipArchiveEntry entry = archive.Entries[i];
+                    string destinationPath = GetSafeExtractPath(extractRoot, entry.FullName);
+                    int progress = 2 + (int)Math.Round(((i + 1) * 8.0) / Math.Max(1, total));
+
+                    if (string.IsNullOrEmpty(entry.Name))
+                    {
+                        Directory.CreateDirectory(destinationPath);
+                        SetProgress(progress, "Extracting " + entry.FullName);
+                        continue;
+                    }
+
+                    Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
+                    entry.ExtractToFile(destinationPath, true);
+                    SetProgress(progress, "Extracting " + entry.Name);
+                }
+            }
+        }
+
+        private static string GetSafeExtractPath(string root, string entryName)
+        {
+            string destinationPath = Path.GetFullPath(Path.Combine(root, entryName));
+            string rootPath = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (!destinationPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidDataException("Invalid archive entry.");
+            }
+
+            return destinationPath;
         }
 
         private static List<string> FindFontFiles(string root)
@@ -148,10 +213,63 @@ namespace GMTPC_FONTS
 
         private void SetProgress(int value, string text)
         {
+            lock (statusLock)
+            {
+                currentStatus = text;
+            }
+
             Dispatcher.Invoke(() =>
             {
                 InstallProgress.Value = Math.Max(0, Math.Min(100, value));
-                ProgressText.Text = text;
+                ProgressText.Text = isPaused ? "Paused - " + text : text;
+            });
+        }
+
+        private void CheckPauseOrStop(CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            pauseGate.Wait(token);
+            token.ThrowIfCancellationRequested();
+        }
+
+        private void PauseButton_Click(object sender, RoutedEventArgs e)
+        {
+            isPaused = !isPaused;
+            if (isPaused)
+            {
+                pauseGate.Reset();
+                PauseButton.Content = "Resume";
+            }
+            else
+            {
+                pauseGate.Set();
+                PauseButton.Content = "Pause";
+            }
+
+            string status;
+            lock (statusLock)
+            {
+                status = currentStatus;
+            }
+
+            ProgressText.Text = isPaused ? "Paused - " + status : status;
+        }
+
+        private void StopButton_Click(object sender, RoutedEventArgs e)
+        {
+            StopButton.IsEnabled = false;
+            PauseButton.IsEnabled = false;
+            pauseGate.Set();
+            cancellation.Cancel();
+            SetProgress((int)InstallProgress.Value, "Stopping");
+        }
+
+        private void SetControlsEnabled(bool enabled)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                PauseButton.IsEnabled = enabled;
+                StopButton.IsEnabled = enabled;
             });
         }
 
