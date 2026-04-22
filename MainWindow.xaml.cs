@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -62,8 +63,8 @@ namespace GMTPC_FONTS
 
         private static void OpenFontListInNotepad()
         {
-            string fontListPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fonts-list.txt");
-            if (!File.Exists(fontListPath))
+            string fontListPath = ExtractEmbeddedResourceToTempFile("fonts-list.txt", "fonts-list.txt");
+            if (string.IsNullOrEmpty(fontListPath))
             {
                 return;
             }
@@ -84,14 +85,14 @@ namespace GMTPC_FONTS
 
         private void InstallFonts(CancellationToken token)
         {
-            string archivePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GMTPC-FONTS.zip");
-            if (!File.Exists(archivePath))
+            SetProgress(1, "Preparing embedded font package");
+            string archivePath = ExtractEmbeddedResourceToTempFile("GMTPC-FONTS.zip", "GMTPC-FONTS.zip");
+            if (string.IsNullOrEmpty(archivePath) || !File.Exists(archivePath))
             {
-                throw new FileNotFoundException("Font package not found.", archivePath);
+                throw new FileNotFoundException("Embedded font package not found.");
             }
 
             string extractRoot = Path.Combine(Path.GetTempPath(), "GMTPC-FONTS-" + Guid.NewGuid().ToString("N"));
-            bool completed = false;
 
             try
             {
@@ -119,16 +120,46 @@ namespace GMTPC_FONTS
                 SetProgress(97, "Refreshing Windows font list");
                 BroadcastFontChange();
                 SetProgress(98, "Cleaning up");
-                completed = true;
             }
             finally
             {
                 TryDeleteDirectory(extractRoot);
-                if (completed && !token.IsCancellationRequested)
+                TryDeleteFile(archivePath);
+            }
+        }
+
+        private static string ExtractEmbeddedResourceToTempFile(string resourceFileName, string tempFileName)
+        {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            string resourceName = null;
+            string resourceSuffix = "." + resourceFileName;
+
+            foreach (string name in assembly.GetManifestResourceNames())
+            {
+                if (string.Equals(name, resourceFileName, StringComparison.OrdinalIgnoreCase)
+                    || name.EndsWith(resourceSuffix, StringComparison.OrdinalIgnoreCase))
                 {
-                    TryDeleteFile(archivePath);
+                    resourceName = name;
+                    break;
                 }
             }
+
+            if (string.IsNullOrEmpty(resourceName))
+            {
+                return null;
+            }
+
+            string tempDirectory = Path.Combine(Path.GetTempPath(), "GMTPC-FONTS");
+            Directory.CreateDirectory(tempDirectory);
+            string tempPath = Path.Combine(tempDirectory, tempFileName);
+
+            using (Stream input = assembly.GetManifestResourceStream(resourceName))
+            using (FileStream output = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            {
+                input.CopyTo(output);
+            }
+
+            return tempPath;
         }
 
         private void ExtractArchive(string archivePath, string extractRoot, CancellationToken token)
