@@ -533,7 +533,7 @@ namespace GMTPC_FONTS
 
         private void AllFontsCheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            if (AllFontsCheckBox.IsChecked != true)
+            if (AllFontsCheckBox.IsChecked != true || familyCheckBoxes == null)
             {
                 return;
             }
@@ -546,7 +546,7 @@ namespace GMTPC_FONTS
 
         private void FamilyCheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            if (AllFontsCheckBox.IsChecked == true)
+            if (AllFontsCheckBox != null && AllFontsCheckBox.IsChecked == true)
             {
                 AllFontsCheckBox.IsChecked = false;
             }
