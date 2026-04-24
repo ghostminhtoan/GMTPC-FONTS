@@ -12,7 +12,7 @@
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         Background="#111418"
-        Foreground="#F3F6FA"
+        Foreground="#7FEAFF"
         FontFamily="Segoe UI Variable, Segoe UI"
         ShowInTaskbar="True"
         Loaded="Window_Loaded">
@@ -106,7 +106,7 @@
                        Grid.Row="6"
                        Text="Choose font families and click Install"
                        FontSize="12"
-                       Foreground="#AAB4C0"
+                       Foreground="#6EDFF4"
                        HorizontalAlignment="Center"
                        TextTrimming="CharacterEllipsis"
                        MaxWidth="760" />

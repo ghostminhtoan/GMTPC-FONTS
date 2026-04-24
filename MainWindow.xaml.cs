@@ -428,7 +428,7 @@ namespace GMTPC_FONTS
         {
             SolidColorBrush background = new SolidColorBrush(Color.FromRgb(21, 26, 32));
             SolidColorBrush borderBrush = new SolidColorBrush(Color.FromRgb(44, 53, 64));
-            SolidColorBrush foreground = new SolidColorBrush(Color.FromRgb(170, 180, 192));
+            SolidColorBrush foreground = new SolidColorBrush(Color.FromRgb(127, 234, 255));
 
             for (int i = 0; i < workerStatusBlocks.Length; i++)
             {
