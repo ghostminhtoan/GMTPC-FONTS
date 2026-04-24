@@ -11,5 +11,8 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Height" Value="10" />
         </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#7FEAFF" />
+        </Style>
     </Application.Resources>
 </Application>
