@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Title="GMTPC Fonts"
         Width="920"
-        Height="500"
+        Height="620"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         Background="#111418"
@@ -16,67 +16,145 @@
         FontFamily="Segoe UI Variable, Segoe UI"
         ShowInTaskbar="True"
         Loaded="Window_Loaded">
-    <Border Padding="28" Background="#111418">
+    <Border Padding="24" Background="#111418">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="18" />
+                <RowDefinition Height="16" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="18" />
+                <RowDefinition Height="16" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="18" />
+                <RowDefinition Height="16" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="14" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="16" />
+                <RowDefinition Height="*" />
                 <RowDefinition Height="18" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0"
-                       Text="Installing..."
+                       Text="GMTPC Fonts"
                        FontSize="24"
                        FontWeight="SemiBold"
                        HorizontalAlignment="Center" />
 
+            <Border Grid.Row="2"
+                    Padding="16"
+                    Background="#151A20"
+                    BorderBrush="#2C3540"
+                    BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="Choose font families to install"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,12"
+                               HorizontalAlignment="Center" />
+
+                    <WrapPanel HorizontalAlignment="Center"
+                               ItemWidth="205"
+                               Margin="0,0,0,4">
+                        <CheckBox x:Name="AllFontsCheckBox"
+                                  Content="ALL FONTS (more than 3000 FONTS)"
+                                  IsChecked="True"
+                                  Margin="0,0,12,10"
+                                  Checked="AllFontsCheckBox_Checked" />
+                        <CheckBox x:Name="HltCheckBox"
+                                  Content="HLT"
+                                  Margin="0,0,12,10"
+                                  Checked="FamilyCheckBox_Checked" />
+                        <CheckBox x:Name="ICielCheckBox"
+                                  Content="iciel"
+                                  Margin="0,0,12,10"
+                                  Checked="FamilyCheckBox_Checked" />
+                        <CheckBox x:Name="SanFranciscoCheckBox"
+                                  Content="SanFrancisco"
+                                  Margin="0,0,12,10"
+                                  Checked="FamilyCheckBox_Checked" />
+                        <CheckBox x:Name="SfuCheckBox"
+                                  Content="SFU"
+                                  Margin="0,0,12,10"
+                                  Checked="FamilyCheckBox_Checked" />
+                        <CheckBox x:Name="SvnCheckBox"
+                                  Content="SVN"
+                                  Margin="0,0,12,10"
+                                  Checked="FamilyCheckBox_Checked" />
+                        <CheckBox x:Name="UtmCheckBox"
+                                  Content="UTM"
+                                  Margin="0,0,12,10"
+                                  Checked="FamilyCheckBox_Checked" />
+                        <CheckBox x:Name="UvfCheckBox"
+                                  Content="UVF"
+                                  Margin="0,0,12,10"
+                                  Checked="FamilyCheckBox_Checked" />
+                        <CheckBox x:Name="UvnCheckBox"
+                                  Content="UVN"
+                                  Margin="0,0,12,10"
+                                  Checked="FamilyCheckBox_Checked" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
             <ProgressBar x:Name="InstallProgress"
-                         Grid.Row="2"
+                         Grid.Row="4"
                          Minimum="0"
                          Maximum="100"
                          Value="0" />
 
             <TextBlock x:Name="ProgressText"
-                       Grid.Row="4"
-                       Text="Preparing"
+                       Grid.Row="6"
+                       Text="Choose font families and click Install"
                        FontSize="12"
                        Foreground="#AAB4C0"
                        HorizontalAlignment="Center"
                        TextTrimming="CharacterEllipsis"
-                       MaxWidth="580" />
+                       MaxWidth="760" />
+
+            <TextBlock Grid.Row="8"
+                       Text="Workers"
+                       FontSize="13"
+                       FontWeight="SemiBold"
+                       HorizontalAlignment="Center" />
 
             <primitives:UniformGrid x:Name="WorkerGrid"
-                                    Grid.Row="6"
+                                    Grid.Row="10"
                                     Columns="4"
                                     Rows="5" />
 
-            <StackPanel Grid.Row="8"
+            <StackPanel Grid.Row="12"
                         Orientation="Horizontal"
                         HorizontalAlignment="Center">
+                <Button x:Name="StartButton"
+                        Content="Install"
+                        Width="92"
+                        Height="32"
+                        Margin="0,0,12,0"
+                        Click="StartButton_Click"
+                        Background="#18476D"
+                        Foreground="#F3F6FA"
+                        BorderBrush="#356C99" />
+
                 <Button x:Name="PauseButton"
                         Content="Pause"
                         Width="84"
-                        Height="30"
-                        Margin="0,0,10,0"
+                        Height="32"
+                        Margin="0,0,12,0"
                         Click="PauseButton_Click"
                         Background="#252B33"
                         Foreground="#F3F6FA"
-                        BorderBrush="#3A444F" />
+                        BorderBrush="#3A444F"
+                        IsEnabled="False" />
 
                 <Button x:Name="StopButton"
                         Content="Stop"
                         Width="84"
-                        Height="30"
+                        Height="32"
                         Click="StopButton_Click"
                         Background="#3A2227"
                         Foreground="#F3F6FA"
-                        BorderBrush="#70414A" />
+                        BorderBrush="#70414A"
+                        IsEnabled="False" />
             </StackPanel>
         </Grid>
     </Border>

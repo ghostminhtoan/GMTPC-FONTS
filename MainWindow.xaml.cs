@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -21,25 +22,67 @@ namespace GMTPC_FONTS
         private const int MaxParallelFontInstalls = 20;
         private static readonly IntPtr HwndBroadcast = new IntPtr(0xffff);
         private static readonly string[] FontExtensions = { ".ttf", ".otf", ".ttc", ".fon", ".pfm", ".pfb" };
+        private static readonly string[] SupportedFamilies = { "HLT", "ICIEL", "SANFRANCISCO", "SFU", "SVN", "UTM", "UVF", "UVN" };
         private readonly CancellationTokenSource cancellation = new CancellationTokenSource();
         private readonly ManualResetEventSlim pauseGate = new ManualResetEventSlim(true);
         private readonly object statusLock = new object();
         private readonly TextBlock[] workerStatusBlocks = new TextBlock[MaxParallelFontInstalls];
+        private CheckBox[] familyCheckBoxes;
         private bool isPaused;
+        private bool installStarted;
         private string currentStatus = "Preparing";
 
         public MainWindow()
         {
             InitializeComponent();
+            familyCheckBoxes = new[]
+            {
+                HltCheckBox,
+                ICielCheckBox,
+                SanFranciscoCheckBox,
+                SfuCheckBox,
+                SvnCheckBox,
+                UtmCheckBox,
+                UvfCheckBox,
+                UvnCheckBox
+            };
             InitializeWorkerStatuses();
+            SetProgress(0, "Choose font families and click Install");
         }
 
-        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            OpenFontListInNotepad();
+        }
+
+        private async void StartButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (installStarted)
+            {
+                return;
+            }
+
+            bool installAllFonts = AllFontsCheckBox.IsChecked == true;
+            HashSet<string> selectedFamilies = GetSelectedFamilies();
+            if (!installAllFonts && selectedFamilies.Count == 0)
+            {
+                MessageBox.Show(
+                    "Choose at least one font family or select ALL FONTS.",
+                    "GMTPC Fonts",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+            }
+
+            installStarted = true;
+            SetSelectionControlsEnabled(false);
+            StartButton.IsEnabled = false;
+            PauseButton.IsEnabled = true;
+            StopButton.IsEnabled = true;
+
             try
             {
-                OpenFontListInNotepad();
-                await Task.Run(() => InstallFonts(cancellation.Token));
+                await Task.Run(() => InstallFonts(cancellation.Token, installAllFonts, selectedFamilies));
                 SetProgress(100, "Completed");
                 SetControlsEnabled(false);
                 await Task.Delay(700);
@@ -54,10 +97,11 @@ namespace GMTPC_FONTS
             }
             catch (Exception ex)
             {
-                SetProgress(100, ex.Message);
+                SetProgress((int)InstallProgress.Value, ex.Message);
                 SetControlsEnabled(false);
-                await Task.Delay(2500);
-                Application.Current.Shutdown(1);
+                SetSelectionControlsEnabled(true);
+                StartButton.IsEnabled = true;
+                installStarted = false;
             }
         }
 
@@ -83,7 +127,7 @@ namespace GMTPC_FONTS
             }
         }
 
-        private void InstallFonts(CancellationToken token)
+        private void InstallFonts(CancellationToken token, bool installAllFonts, HashSet<string> selectedFamilies)
         {
             SetProgress(1, "Preparing embedded font package");
             string archivePath = ExtractEmbeddedResourceToTempFile("GMTPC-FONTS.zip", "GMTPC-FONTS.zip");
@@ -106,6 +150,17 @@ namespace GMTPC_FONTS
                 {
                     throw new InvalidOperationException("No fonts found.");
                 }
+
+                fontFiles = FilterFontFiles(fontFiles, installAllFonts, selectedFamilies);
+                if (fontFiles.Count == 0)
+                {
+                    throw new InvalidOperationException("No fonts matched the selected families.");
+                }
+
+                string selectionLabel = installAllFonts
+                    ? "Installing ALL FONTS"
+                    : "Installing " + string.Join(", ", selectedFamilies.OrderBy(value => value, StringComparer.OrdinalIgnoreCase));
+                SetProgress(12, selectionLabel);
 
                 string userFontsDirectory = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -184,7 +239,12 @@ namespace GMTPC_FONTS
                         continue;
                     }
 
-                    Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
+                    string parentDirectory = Path.GetDirectoryName(destinationPath);
+                    if (!string.IsNullOrEmpty(parentDirectory))
+                    {
+                        Directory.CreateDirectory(parentDirectory);
+                    }
+
                     entry.ExtractToFile(destinationPath, true);
                     SetProgress(progress, "Extracting " + entry.Name);
                 }
@@ -221,6 +281,76 @@ namespace GMTPC_FONTS
 
             result.Sort(StringComparer.OrdinalIgnoreCase);
             return result;
+        }
+
+        private static List<string> FilterFontFiles(List<string> fontFiles, bool installAllFonts, HashSet<string> selectedFamilies)
+        {
+            if (installAllFonts)
+            {
+                return fontFiles;
+            }
+
+            List<string> filtered = new List<string>();
+            foreach (string fontFile in fontFiles)
+            {
+                string fileName = Path.GetFileName(fontFile);
+                foreach (string family in selectedFamilies)
+                {
+                    if (fileName.StartsWith(family, StringComparison.OrdinalIgnoreCase))
+                    {
+                        filtered.Add(fontFile);
+                        break;
+                    }
+                }
+            }
+
+            return filtered;
+        }
+
+        private HashSet<string> GetSelectedFamilies()
+        {
+            HashSet<string> selectedFamilies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (HltCheckBox.IsChecked == true)
+            {
+                selectedFamilies.Add("HLT");
+            }
+
+            if (ICielCheckBox.IsChecked == true)
+            {
+                selectedFamilies.Add("ICIEL");
+            }
+
+            if (SanFranciscoCheckBox.IsChecked == true)
+            {
+                selectedFamilies.Add("SANFRANCISCO");
+            }
+
+            if (SfuCheckBox.IsChecked == true)
+            {
+                selectedFamilies.Add("SFU");
+            }
+
+            if (SvnCheckBox.IsChecked == true)
+            {
+                selectedFamilies.Add("SVN");
+            }
+
+            if (UtmCheckBox.IsChecked == true)
+            {
+                selectedFamilies.Add("UTM");
+            }
+
+            if (UvfCheckBox.IsChecked == true)
+            {
+                selectedFamilies.Add("UVF");
+            }
+
+            if (UvnCheckBox.IsChecked == true)
+            {
+                selectedFamilies.Add("UVN");
+            }
+
+            return selectedFamilies;
         }
 
         private void InstallFontsInParallel(List<string> fontFiles, string userFontsDirectory, CancellationToken token)
@@ -262,7 +392,7 @@ namespace GMTPC_FONTS
                             SetWorkerStatus(workerIndex, "Done " + fontName);
                             SetProgress(progress, "Installed " + fontName + " (" + done + "/" + fontFiles.Count + ")");
                         }
-                    }, token);
+                    }, token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
                 }
 
                 Task.WaitAll(workers);
@@ -401,6 +531,27 @@ namespace GMTPC_FONTS
             token.ThrowIfCancellationRequested();
         }
 
+        private void AllFontsCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            if (AllFontsCheckBox.IsChecked != true)
+            {
+                return;
+            }
+
+            foreach (CheckBox checkBox in familyCheckBoxes)
+            {
+                checkBox.IsChecked = false;
+            }
+        }
+
+        private void FamilyCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            if (AllFontsCheckBox.IsChecked == true)
+            {
+                AllFontsCheckBox.IsChecked = false;
+            }
+        }
+
         private void PauseButton_Click(object sender, RoutedEventArgs e)
         {
             isPaused = !isPaused;
@@ -433,10 +584,23 @@ namespace GMTPC_FONTS
             SetProgress((int)InstallProgress.Value, "Stopping");
         }
 
+        private void SetSelectionControlsEnabled(bool enabled)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                AllFontsCheckBox.IsEnabled = enabled;
+                foreach (CheckBox checkBox in familyCheckBoxes)
+                {
+                    checkBox.IsEnabled = enabled;
+                }
+            });
+        }
+
         private void SetControlsEnabled(bool enabled)
         {
             Dispatcher.Invoke(() =>
             {
+                StartButton.IsEnabled = enabled;
                 PauseButton.IsEnabled = enabled;
                 StopButton.IsEnabled = enabled;
             });
