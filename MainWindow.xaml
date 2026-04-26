@@ -11,156 +11,312 @@
         Height="620"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        Topmost="True"
         Background="#111418"
         Foreground="#7FEAFF"
         FontFamily="Segoe UI Variable, Segoe UI"
         ShowInTaskbar="True"
         Loaded="Window_Loaded">
-    <Border Padding="24" Background="#111418">
-        <Grid>
+    <Border Background="#111418"
+            BorderBrush="#2C3540"
+            BorderThickness="1">
+        <Border.Resources>
+            <Style x:Key="ActionButtonStyle" TargetType="Button">
+                <Setter Property="Foreground" Value="#F3F6FA" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="14,0" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Root"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Root" Property="Opacity" Value="0.92" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Root" Property="Opacity" Value="0.78" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Root" Property="Opacity" Value="0.45" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="TitleButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
+                <Setter Property="Width" Value="34" />
+                <Setter Property="Height" Value="28" />
+                <Setter Property="Background" Value="#161C22" />
+                <Setter Property="BorderBrush" Value="#33404C" />
+                <Setter Property="Foreground" Value="#7FEAFF" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="Padding" Value="0" />
+            </Style>
+
+            <Style x:Key="TopmostToggleStyle" TargetType="ToggleButton">
+                <Setter Property="Width" Value="44" />
+                <Setter Property="Height" Value="24" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Grid Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
+                                <Border x:Name="Track"
+                                        CornerRadius="12"
+                                        Background="#25313C"
+                                        BorderBrush="#3A4A58"
+                                        BorderThickness="1" />
+                                <Ellipse x:Name="Thumb"
+                                         Width="18"
+                                         Height="18"
+                                         HorizontalAlignment="Left"
+                                         Margin="2,0,0,0"
+                                         Fill="#DDFBFF" />
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Track" Property="Background" Value="#12B8D7" />
+                                    <Setter TargetName="Track" Property="BorderBrush" Value="#6FE8FF" />
+                                    <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right" />
+                                    <Setter TargetName="Thumb" Property="Margin" Value="0,0,2,0" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Track" Property="Opacity" Value="0.92" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Track" Property="Opacity" Value="0.8" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </Border.Resources>
+
+        <Grid Margin="1">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="16" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="16" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="16" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="14" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="16" />
+                <RowDefinition Height="34" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="18" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0"
-                       Text="GMTPC Fonts"
-                       FontSize="24"
-                       FontWeight="SemiBold"
-                       HorizontalAlignment="Center" />
-
-            <Border Grid.Row="2"
-                    Padding="16"
+            <Border Grid.Row="0"
                     Background="#151A20"
                     BorderBrush="#2C3540"
-                    BorderThickness="1">
-                <StackPanel>
-                    <TextBlock Text="Choose font families to install"
-                               FontSize="13"
-                               FontWeight="SemiBold"
-                               Margin="0,0,0,12"
-                               HorizontalAlignment="Center" />
+                    BorderThickness="0,0,0,1"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                    <WrapPanel HorizontalAlignment="Center"
-                               ItemWidth="205"
-                               Margin="0,0,0,4">
-                        <WrapPanel.Resources>
-                            <Style TargetType="CheckBox">
-                                <Setter Property="Foreground" Value="#7FEAFF" />
-                            </Style>
-                        </WrapPanel.Resources>
-                        <CheckBox x:Name="HltCheckBox"
-                                  Content="HLT"
-                                  Margin="0,0,12,10"
-                                  Checked="FamilyCheckBox_Checked" />
-                        <CheckBox x:Name="ICielCheckBox"
-                                  Content="iciel"
-                                  Margin="0,0,12,10"
-                                  Checked="FamilyCheckBox_Checked" />
-                        <CheckBox x:Name="SanFranciscoCheckBox"
-                                  Content="SanFrancisco"
-                                  Margin="0,0,12,10"
-                                  Checked="FamilyCheckBox_Checked" />
-                        <CheckBox x:Name="SfuCheckBox"
-                                  Content="SFU"
-                                  Margin="0,0,12,10"
-                                  Checked="FamilyCheckBox_Checked" />
-                        <CheckBox x:Name="SvnCheckBox"
-                                  Content="SVN"
-                                  Margin="0,0,12,10"
-                                  Checked="FamilyCheckBox_Checked" />
-                        <CheckBox x:Name="UtmCheckBox"
-                                  Content="UTM"
-                                  Margin="0,0,12,10"
-                                  Checked="FamilyCheckBox_Checked" />
-                        <CheckBox x:Name="UvfCheckBox"
-                                  Content="UVF"
-                                  Margin="0,0,12,10"
-                                  Checked="FamilyCheckBox_Checked" />
-                        <CheckBox x:Name="UvnCheckBox"
-                                  Content="UVN"
-                                  Margin="0,0,12,10"
-                                  Checked="FamilyCheckBox_Checked" />
-                        <CheckBox x:Name="AllFontsCheckBox"
-          Content="ALL FONTS (>3000 FONTS)"
-          IsChecked="True"
-          Margin="0,0,12,10"
-          Checked="AllFontsCheckBox_Checked" />
-                    </WrapPanel>
-                </StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="10,0,0,0">
+                        <Image Width="16"
+                               Height="16"
+                               Source="gmtpc fonts.ico"
+                               Margin="0,0,8,0" />
+                        <TextBlock Text="GMTPC Fonts"
+                                   VerticalAlignment="Center"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="#7FEAFF" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="0,0,6,0">
+                        <TextBlock Text="On Top"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,6,0"
+                                   FontSize="11"
+                                   Foreground="#7FEAFF" />
+                        <ToggleButton x:Name="AlwaysOnTopToggle"
+                                      Style="{StaticResource TopmostToggleStyle}"
+                                      IsChecked="True"
+                                      Margin="0,0,8,0"
+                                      Checked="AlwaysOnTopToggle_Changed"
+                                      Unchecked="AlwaysOnTopToggle_Changed"
+                                      ToolTip="Always on top" />
+                        <Button x:Name="MinimizeButton"
+                                Style="{StaticResource TitleButtonStyle}"
+                                Content="&#x2014;"
+                                Click="MinimizeButton_Click"
+                                Margin="0,0,6,0"
+                                ToolTip="Minimize" />
+                        <Button x:Name="CloseButton"
+                                Style="{StaticResource TitleButtonStyle}"
+                                Content="&#x2715;"
+                                Background="#3A2227"
+                                BorderBrush="#70414A"
+                                Click="CloseButton_Click"
+                                ToolTip="Close" />
+                    </StackPanel>
+                </Grid>
             </Border>
 
-            <ProgressBar x:Name="InstallProgress"
-                         Grid.Row="4"
-                         Minimum="0"
-                         Maximum="100"
-                         Value="0" />
+            <Border Grid.Row="1"
+                    Padding="24"
+                    Background="#111418">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="16" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="16" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="16" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="14" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="16" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-            <TextBlock x:Name="ProgressText"
-                       Grid.Row="6"
-                       Text="Choose font families and click Install"
-                       FontSize="12"
-                       Foreground="#6EDFF4"
-                       HorizontalAlignment="Center"
-                       TextTrimming="CharacterEllipsis"
-                       MaxWidth="760" />
+                    <TextBlock Grid.Row="0"
+                               Text="GMTPC Fonts"
+                               FontSize="24"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center" />
 
-            <TextBlock Grid.Row="8"
-                       Text="Workers"
-                       FontSize="13"
-                       FontWeight="SemiBold"
-                       HorizontalAlignment="Center" />
+                    <Border Grid.Row="2"
+                            Padding="16"
+                            Background="#151A20"
+                            BorderBrush="#2C3540"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Choose font families to install"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,12"
+                                       HorizontalAlignment="Center" />
 
-            <primitives:UniformGrid x:Name="WorkerGrid"
-                                    Grid.Row="10"
-                                    Columns="4"
-                                    Rows="5" />
+                            <WrapPanel HorizontalAlignment="Center"
+                                       ItemWidth="205"
+                                       Margin="0,0,0,4">
+                                <WrapPanel.Resources>
+                                    <Style TargetType="CheckBox">
+                                        <Setter Property="Foreground" Value="#7FEAFF" />
+                                    </Style>
+                                </WrapPanel.Resources>
 
-            <StackPanel Grid.Row="12"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Center">
-                <Button x:Name="StartButton"
-                        Content="Install"
-                        Width="92"
-                        Height="32"
-                        Margin="0,0,12,0"
-                        Click="StartButton_Click"
-                        Background="#18476D"
-                        Foreground="#F3F6FA"
-                        BorderBrush="#356C99" />
+                                <CheckBox x:Name="HltCheckBox"
+                                          Content="HLT"
+                                          Margin="0,0,12,10"
+                                          Checked="FamilyCheckBox_Checked" />
+                                <CheckBox x:Name="ICielCheckBox"
+                                          Content="iciel"
+                                          Margin="0,0,12,10"
+                                          Checked="FamilyCheckBox_Checked" />
+                                <CheckBox x:Name="SanFranciscoCheckBox"
+                                          Content="SanFrancisco"
+                                          Margin="0,0,12,10"
+                                          Checked="FamilyCheckBox_Checked" />
+                                <CheckBox x:Name="SfuCheckBox"
+                                          Content="SFU"
+                                          Margin="0,0,12,10"
+                                          Checked="FamilyCheckBox_Checked" />
+                                <CheckBox x:Name="SvnCheckBox"
+                                          Content="SVN"
+                                          Margin="0,0,12,10"
+                                          Checked="FamilyCheckBox_Checked" />
+                                <CheckBox x:Name="UtmCheckBox"
+                                          Content="UTM"
+                                          Margin="0,0,12,10"
+                                          Checked="FamilyCheckBox_Checked" />
+                                <CheckBox x:Name="UvfCheckBox"
+                                          Content="UVF"
+                                          Margin="0,0,12,10"
+                                          Checked="FamilyCheckBox_Checked" />
+                                <CheckBox x:Name="UvnCheckBox"
+                                          Content="UVN"
+                                          Margin="0,0,12,10"
+                                          Checked="FamilyCheckBox_Checked" />
+                                <CheckBox x:Name="AllFontsCheckBox"
+                                          Content="ALL FONTS (>3000 FONTS)"
+                                          IsChecked="True"
+                                          Margin="0,0,12,10"
+                                          Checked="AllFontsCheckBox_Checked" />
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
 
-                <Button x:Name="PauseButton"
-                        Content="Pause"
-                        Width="84"
-                        Height="32"
-                        Margin="0,0,12,0"
-                        Click="PauseButton_Click"
-                        Background="#252B33"
-                        Foreground="#F3F6FA"
-                        BorderBrush="#3A444F"
-                        IsEnabled="False" />
+                    <ProgressBar x:Name="InstallProgress"
+                                 Grid.Row="4"
+                                 Minimum="0"
+                                 Maximum="100"
+                                 Value="0" />
 
-                <Button x:Name="StopButton"
-                        Content="Stop"
-                        Width="84"
-                        Height="32"
-                        Click="StopButton_Click"
-                        Background="#3A2227"
-                        Foreground="#F3F6FA"
-                        BorderBrush="#70414A"
-                        IsEnabled="False" />
-            </StackPanel>
+                    <TextBlock x:Name="ProgressText"
+                               Grid.Row="6"
+                               Text="Choose font families and click Install"
+                               FontSize="12"
+                               Foreground="#6EDFF4"
+                               HorizontalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="760" />
+
+                    <TextBlock Grid.Row="8"
+                               Text="Workers"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center" />
+
+                    <primitives:UniformGrid x:Name="WorkerGrid"
+                                            Grid.Row="10"
+                                            Columns="4"
+                                            Rows="5" />
+
+                    <StackPanel Grid.Row="12"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Center">
+                        <Button x:Name="StartButton"
+                                Style="{StaticResource ActionButtonStyle}"
+                                Content="Install"
+                                Width="92"
+                                Height="32"
+                                Margin="0,0,12,0"
+                                Click="StartButton_Click"
+                                Background="#18476D"
+                                BorderBrush="#356C99" />
+
+                        <Button x:Name="PauseButton"
+                                Style="{StaticResource ActionButtonStyle}"
+                                Content="Pause"
+                                Width="84"
+                                Height="32"
+                                Margin="0,0,12,0"
+                                Click="PauseButton_Click"
+                                Background="#252B33"
+                                BorderBrush="#3A444F"
+                                IsEnabled="False" />
+
+                        <Button x:Name="StopButton"
+                                Style="{StaticResource ActionButtonStyle}"
+                                Content="Stop"
+                                Width="84"
+                                Height="32"
+                                Click="StopButton_Click"
+                                Background="#3A2227"
+                                BorderBrush="#70414A"
+                                IsEnabled="False" />
+                    </StackPanel>
+                </Grid>
+            </Border>
         </Grid>
     </Border>
 </Window>

@@ -11,6 +11,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
 
@@ -35,6 +37,7 @@ namespace GMTPC_FONTS
         public MainWindow()
         {
             InitializeComponent();
+            Topmost = true;
             familyCheckBoxes = new[]
             {
                 HltCheckBox,
@@ -53,6 +56,29 @@ namespace GMTPC_FONTS
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             OpenFontListInNotepad();
+        }
+
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                DragMove();
+            }
+        }
+
+        private void AlwaysOnTopToggle_Changed(object sender, RoutedEventArgs e)
+        {
+            Topmost = AlwaysOnTopToggle.IsChecked == true;
+        }
+
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
 
         private async void StartButton_Click(object sender, RoutedEventArgs e)
