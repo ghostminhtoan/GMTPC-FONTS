@@ -55,11 +55,11 @@
                     <WrapPanel HorizontalAlignment="Center"
                                ItemWidth="205"
                                Margin="0,0,0,4">
-                        <CheckBox x:Name="AllFontsCheckBox"
-                                  Content="ALL FONTS (more than 3000 FONTS)"
-                                  IsChecked="True"
-                                  Margin="0,0,12,10"
-                                  Checked="AllFontsCheckBox_Checked" />
+                        <WrapPanel.Resources>
+                            <Style TargetType="CheckBox">
+                                <Setter Property="Foreground" Value="#7FEAFF" />
+                            </Style>
+                        </WrapPanel.Resources>
                         <CheckBox x:Name="HltCheckBox"
                                   Content="HLT"
                                   Margin="0,0,12,10"
@@ -92,6 +92,11 @@
                                   Content="UVN"
                                   Margin="0,0,12,10"
                                   Checked="FamilyCheckBox_Checked" />
+                        <CheckBox x:Name="AllFontsCheckBox"
+          Content="ALL FONTS (>3000 FONTS)"
+          IsChecked="True"
+          Margin="0,0,12,10"
+          Checked="AllFontsCheckBox_Checked" />
                     </WrapPanel>
                 </StackPanel>
             </Border>
